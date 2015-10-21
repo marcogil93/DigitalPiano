@@ -1,0 +1,162 @@
+MPLINK 5.02, LINKER
+Linker Map File - Created Wed Nov 26 11:38:59 2014
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x000004
+                   .cinit    romdata   0x000004    program   0x000002
+                   .org_1       code   0x000008    program   0x000004
+                   .org_2       code   0x000018    program   0x000004
+                   .org_3       code   0x001000    program   0x000004
+                   .org_4       code   0x001008    program   0x000652
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000005      
+                            0x000008    0x00000b      
+                            0x000018    0x00001b      
+                            0x001000    0x001003      
+                            0x001008    0x001659      
+            1636 out of 33048 program addresses used, program memory utilization is 4%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+           ALEGRIA_SONG_1   0x0014b4    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_2   0x001502    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_3   0x001518    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_4   0x001566    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_5   0x00157c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_6   0x0015d2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_7   0x0015f8    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_8   0x001642    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            CONFIG_TIMERS   0x0011b2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    DELAY   0x00134a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+               EPONA_SONG   0x001658    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 ISR_HIGH   0x0011a6    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+             LCD_2RENGLON   0x001322    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                     LOOP   0x0010b6    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                     MAIN   0x00100c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_DO   0x0011cc    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_DO_MAYOR   0x001274    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_DO_SOSTENIDO   0x0011da    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_FA   0x001212    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_FA_MAYOR   0x00129e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_FA_SOSTENIDO   0x001220    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_LA   0x00124a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_LA_SOSTENIDO   0x001258    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_MI   0x001204    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_MI_MAYOR   0x001290    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_RE   0x0011e8    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_RE_MAYOR   0x001282    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_RE_SOSTENIDO   0x0011f6    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_SI   0x001266    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 NOTA_SOL   0x00122e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       NOTA_SOL_SOSTENIDO   0x00123c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_DO   0x001366    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_DO_SOSTENIDO   0x00137c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_FA   0x0013e8    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_FA_SOSTENIDO   0x0013fe    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+              PRINT_GUION   0x00135a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_LA   0x001468    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_LA_SOSTENIDO   0x00147e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_MI   0x0013d2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_RE   0x00139c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_RE_SOSTENIDO   0x0013b2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_SI   0x00149e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                PRINT_SOL   0x00141e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+      PRINT_SOL_SOSTENIDO   0x00143e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  PWM_OFF   0x0012ee    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   SERIAL   0x001142    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   SONIDO   0x0012ac    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_1   0x001142    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_2   0x00114e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_3   0x00115a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_4   0x001166    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_5   0x001172    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_6   0x00117e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_7   0x00118a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_8   0x001196    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   TIMER0   0x0012e2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   TIMER1   0x001300    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            UNVALID_VALUE   0x0011a2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+               WRITE_TEXT   0x00130e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   delay2   0x001336    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 delay500   0x001350    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    loop1   0x00133c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                     MAIN   0x00100c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                     LOOP   0x0010b6    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   SERIAL   0x001142    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_1   0x001142    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_2   0x00114e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_3   0x00115a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_4   0x001166    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_5   0x001172    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_6   0x00117e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_7   0x00118a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    TCL_8   0x001196    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            UNVALID_VALUE   0x0011a2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 ISR_HIGH   0x0011a6    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            CONFIG_TIMERS   0x0011b2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_DO   0x0011cc    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_DO_SOSTENIDO   0x0011da    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_RE   0x0011e8    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_RE_SOSTENIDO   0x0011f6    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_MI   0x001204    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_FA   0x001212    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_FA_SOSTENIDO   0x001220    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 NOTA_SOL   0x00122e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       NOTA_SOL_SOSTENIDO   0x00123c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_LA   0x00124a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+        NOTA_LA_SOSTENIDO   0x001258    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  NOTA_SI   0x001266    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_DO_MAYOR   0x001274    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_RE_MAYOR   0x001282    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_MI_MAYOR   0x001290    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+            NOTA_FA_MAYOR   0x00129e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   SONIDO   0x0012ac    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   TIMER0   0x0012e2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                  PWM_OFF   0x0012ee    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   TIMER1   0x001300    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+               WRITE_TEXT   0x00130e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+             LCD_2RENGLON   0x001322    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                   delay2   0x001336    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    loop1   0x00133c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                    DELAY   0x00134a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 delay500   0x001350    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+              PRINT_GUION   0x00135a    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_DO   0x001366    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_DO_SOSTENIDO   0x00137c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_RE   0x00139c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_RE_SOSTENIDO   0x0013b2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_MI   0x0013d2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_FA   0x0013e8    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_FA_SOSTENIDO   0x0013fe    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                PRINT_SOL   0x00141e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+      PRINT_SOL_SOSTENIDO   0x00143e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_LA   0x001468    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+       PRINT_LA_SOSTENIDO   0x00147e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+                 PRINT_SI   0x00149e    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_1   0x0014b4    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_2   0x001502    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_3   0x001518    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_4   0x001566    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_5   0x00157c    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_6   0x0015d2    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_7   0x0015f8    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+           ALEGRIA_SONG_8   0x001642    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+               EPONA_SONG   0x001658    program     static C:\Users\Marco\MPLABXProjects\proyectofinal.X\bocina.asm
+
+

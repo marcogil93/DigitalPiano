@@ -1,0 +1,2294 @@
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Warning[205]: Found directive in column 1. (RADIX)
+                      00001 RADIX   DEC                                     ; SET DECIMAL AS DEFAULT BASE
+                      00002                 PROCESSOR       18F45K50                ; SET PROCESSOR TYPE
+                      00003                 #INCLUDE        <P18F45K50.INC>
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ;  MPASM PIC18F45K50 processor include
+                      00005 ; 
+                      00006 ;  (c) Copyright 1999-2014 Microchip Technology, All rights reserved
+                      00007 ;==========================================================================
+                      00008 
+                      02337         LIST
+                      00004 ;
+                      00005 ;       VARIABLE'S DEFINITION SECTION
+                      00006 ;
+  00000000            00007 variable1        EQU    0;
+  00000007            00008 variable2        EQU    7;
+  00000010            00009 var_TMR0H    EQU    0x10;
+  00000011            00010 var_TMR0L    EQU    0x11;
+  00000012            00011 COUNTER      EQU    0X12;
+  00000013            00012 CHAR         EQU    0X13;
+  00000014            00013 LCD_NO_VISIBLE EQU  0x14;
+  00000002            00014 LCD_EN       EQU    2
+  00000000            00015 LCD_RS       EQU    0
+  00000001            00016 LCD_RW       EQU    1
+                      00017 ;       *** ONLY NEEDED FOR SOFTWARE SIMULATION ***
+                      00018                 ORG             0                                       ; RESET VECTOR
+000000 EF00 F008      00019                 GOTO    0X1000
+                      00020 ;
+                      00021                 ORG             0X08                            ; HIGH INTERRUPT VECTOR
+000008 EF04 F008      00022                 GOTO    0X1008
+                      00023 ;
+                      00024                 ORG             0X18                            ; LOW INTERRUPT VECTOR
+000018 EF0C F008      00025                 GOTO    0X1018
+                      00026 ;
+                      00027 ;       *** END OF CODE FOR SOFTWARE SIMULATION ***
+                      00028 ;       *** START OF PROGRAM ***
+                      00029 ;       JUMP VECTORS
+                      00030                 ORG             0X1000                          ; RESET VECTOR
+001000 EF?? F???      00031                 GOTO    MAIN
+                      00032 ;
+                      00033                 ORG             0X1008                          ; HIGH INTERRUPT VECTOR
+001008 EF?? F???      00034                 GOTO    ISR_HIGH                        ; UNCOMMENT WHEN NEEDED
+                      00035 ;
+                      00036 ;               ORG             0X1018                          ; LOW INTERRUPT VECTOR
+                      00037 ;               GOTO    ISR_LOW                         ; UNCOMMENT WHEN NEEDED
+                      00038 ;       RESOURCE INITIALIZATION
+                      00039 
+00100C                00040 MAIN:
+                      00041     ;; INICIOCONFIGURACION DE ENTRADAS Y SALIDAS DEL PIC
+00100C 010F           00042     MOVLB   15
+00100E 6B5D           00043     CLRF ANSELC, BANKED                         ; SET ALL PINS AS DIGITAL
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+001010 6B5B           00044     CLRF ANSELA, BANKED                         ; SET ALL PINS AS DIGITAL
+001012 6B5C           00045     CLRF ANSELB, BANKED                         ; SET ALL PINS AS DIGITAL
+001014 6B5E           00046     CLRF ANSELD, BANKED                         ; SET ALL PINS AS DIGITAL
+001016 6B5F           00047     CLRF ANSELE, BANKED                         ; SET ALL PINS AS DIGITAL
+001018 0E0F           00048     MOVLW 0X0F;
+00101A 6E93           00049     MOVWF TRISB;
+00101C 6A95           00050     CLRF TRISD; SALIDA DE LA LCD
+00101E 6A8C           00051     CLRF LATD;
+001020 6A96           00052     CLRF TRISE
+001022 6A8D           00053     CLRF LATE
+001024 9EF1           00054     BCF INTCON2, RBPU
+001026 8294           00055     BSF TRISC,1 ;BOTON1
+001028 9692           00056     BCF TRISA, 3;  ALIMENTAR LA BOCINA;
+00102A 8689           00057     BSF LATA, 3;   ALIMENTAR LA BOCINA;
+00102C 8492           00058     BSF TRISA, 2;  ENTRADA QUE RECIBE EL PWM;
+00102E 9292           00059     BCF TRISA, 1;  SALIDA DEL VOLTAJE A LA BOCINA;
+001030 9494           00060     BCF TRISC, 2 ; SALIDA DEL VALOR DEL PWM (PARA LA FRECUENCIA DEL PWM);
+                      00061     ;;FIN CONFIGURACION DE ENTRADAS Y SALIDAS DEL PIC
+                      00062     ;;inicio configuración de pwm con pot
+001032 8092           00063     BSF TRISA, 0
+001034 947F           00064     BCF PMD1,ADCMD
+001036 6AC1           00065     CLRF ADCON1
+001038 80C2           00066     BSF ADCON0, 0; PRENDER ADC
+00103A 82C2           00067     BSF ADCON0, 1; EMPIEZA LA CONVERSION
+00103C 9EC0           00068     BCF ADCON2, ADFM;
+00103E 84BA           00069     BSF T2CON, 2 ; TIMER ON
+001040 86BD           00070     BSF CCP1CON,3
+001042 84BD           00071     BSF CCP1CON,2
+                      00072     ;;fin configuración de pwm con pot
+                      00073     ;;inicio de configurar timer0
+001044 0E18           00074     MOVLW 0X18; no activo
+001046 6ED5           00075     MOVWF T0CON
+001048 0E32           00076     MOVLW 0X32
+00104A 6ECD           00077     MOVWF T1CON
+                      00078     ;;fin  de configurar  timer0
+                      00079     ;; inicio de configurar intcon con timer0
+00104C 9EF2           00080     BCF INTCON,7 ; interrupcion de alta prioridad
+00104E 9CF2           00081     BCF INTCON,6 ;PEIE/GIEL: Peripheral Interrupt Enable bit
+001050 8AF2           00082     BSF INTCON,5 ;TMR0 Overflow Interrupt Enable bit
+001052 98F2           00083     BCF INTCON,4 ; INT0 External Interrupt Enable bit, no hay int externas
+001054 84F2           00084     BSF INTCON,2 ;bandera de interrupcion OV timer0
+001056 92F2           00085     BCF INTCON,1 ;INT0 External Interrupt Flag bit
+                      00086     ;; fin de configurar intcon con timer0
+                      00087     ;;;LCD
+001058 8484           00088     bsf PORTE,LCD_EN ; EN = 1
+00105A 9084           00089     bcf PORTE,LCD_RS ; RS = 0
+00105C 0E38           00090     movlw 0x38 ; 8-bit interface, character de 5x8
+00105E 6E83           00091     movwf PORTD
+001060 9484           00092     bcf PORTE,LCD_EN ; EN = 0
+001062 EC?? F???      00093     CALL DELAY
+001066 8484           00094     bsf PORTE,LCD_EN ; EN = 1
+001068 9084           00095     bcf PORTE,LCD_RS ; RS = 0
+00106A 0E38           00096     movlw 0x38 ; 8-bit interface, character de 5x8
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00106C 6E83           00097     movwf PORTD
+00106E 9484           00098     bcf PORTE,LCD_EN ; EN = 0
+001070 EC?? F???      00099     CALL DELAY
+001074 8484           00100     bsf PORTE,LCD_EN ; EN = 1
+001076 9084           00101     bcf PORTE,LCD_RS ; RS = 0
+001078 0E0F           00102     movlw 0x0F ; LCD ON, Cursor ON
+00107A 6E83           00103     movwf PORTD
+00107C 9484           00104     bcf PORTE,LCD_EN ; EN = 0
+00107E EC?? F???      00105     call DELAY
+                      00106     ;; mover el cursor
+001082 8484           00107     bsf PORTE,LCD_EN ; EN = 1
+001084 9084           00108     bcf PORTE,LCD_RS ; RS = 0
+001086 0E02           00109     movlw 0x02 ; cursor at home
+001088 6E83           00110     movwf PORTD
+00108A 9484           00111     bcf PORTE,LCD_EN ; EN = 0
+00108C EC?? F???      00112     call DELAY
+001090 8484           00113     bsf PORTE,LCD_EN ; EN = 1
+001092 9084           00114     bcf PORTE,LCD_RS ; RS = 0
+001094 0E01           00115     movlw 0x01 ; cursor at home
+001096 6E83           00116     movwf PORTD
+001098 9484           00117     bcf PORTE,LCD_EN ; EN = 0
+00109A EC?? F???      00118     call DELAY
+00109E 0E11           00119     MOVLW 0x11;
+0010A0 6E14           00120     MOVWF LCD_NO_VISIBLE;
+0010A2 0E19           00121     MOVLW 0x19;
+0010A4 6EAF           00122     MOVWF SPBRG1;
+0010A6 6AB0           00123     CLRF SPBRGH1;
+0010A8 6AB8           00124     CLRF BAUDCON1;
+0010AA 8EAB           00125     BSF RCSTA1, SPEN;
+0010AC 98AC           00126     BCF TXSTA1, SYNC;
+0010AE 8C94           00127     BSF TRISC, 6;
+0010B0 8E94           00128     BSF TRISC, 7;
+0010B2 8AAC           00129     BSF TXSTA1, TXEN;
+0010B4 88AB           00130     BSF RCSTA1, CREN;
+                      00131 
+0010B6                00132 LOOP:
+0010B6 9289           00133     BCF LATA,1;
+0010B8 988A           00134     BCF LATB,4;
+0010BA 8A8A           00135     BSF LATB,5;
+0010BC 8C8A           00136     BSF LATB,6;
+0010BE 8E8A           00137     BSF LATB,7;
+0010C0 A081           00138     BTFSS PORTB, 0;
+0010C2 EC?? F???      00139         CALL NOTA_DO;
+0010C6 A281           00140     BTFSS PORTB, 1;
+0010C8 EC?? F???      00141         CALL NOTA_MI;
+0010CC A481           00142     BTFSS PORTB, 2;
+0010CE EC?? F???      00143         CALL NOTA_SOL_SOSTENIDO;
+0010D2 A681           00144     BTFSS PORTB, 3;
+0010D4 EC?? F???      00145         CALL NOTA_DO_MAYOR;
+                      00146 
+0010D8 888A           00147     BSF LATB,4;
+0010DA 9A8A           00148     BCF LATB,5;
+0010DC 8C8A           00149     BSF LATB,6;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0010DE 8E8A           00150     BSF LATB,7;
+0010E0 A081           00151     BTFSS PORTB, 0;
+0010E2 EC?? F???      00152         CALL NOTA_DO_SOSTENIDO;
+0010E6 A281           00153     BTFSS PORTB, 1;
+0010E8 EC?? F???      00154         CALL NOTA_FA;
+0010EC A481           00155     BTFSS PORTB, 2;
+0010EE EC?? F???      00156         CALL NOTA_LA;
+0010F2 A681           00157     BTFSS PORTB, 3;
+0010F4 EC?? F???      00158        CALL NOTA_RE_MAYOR;
+                      00159 
+0010F8 888A           00160     BSF LATB,4
+0010FA 8A8A           00161     BSF LATB,5
+0010FC 9C8A           00162     BCF LATB,6
+0010FE 8E8A           00163     BSF LATB,7
+001100 A081           00164     BTFSS PORTB, 0;
+001102 EC?? F???      00165         CALL NOTA_RE;
+001106 A281           00166     BTFSS PORTB, 1;
+001108 EC?? F???      00167         CALL NOTA_FA_SOSTENIDO;
+00110C A481           00168     BTFSS PORTB, 2;
+00110E EC?? F???      00169         CALL NOTA_LA_SOSTENIDO;
+001112 A681           00170     BTFSS PORTB, 3;
+001114 EC?? F???      00171         CALL NOTA_MI_MAYOR;
+                      00172 
+001118 888A           00173     BSF LATB,4
+00111A 8A8A           00174     BSF LATB,5
+00111C 8C8A           00175     BSF LATB,6
+00111E 9E8A           00176     BCF LATB,7
+001120 A081           00177     BTFSS PORTB, 0;
+001122 EC?? F???      00178         CALL NOTA_RE_SOSTENIDO;
+001126 A281           00179     BTFSS PORTB, 1;
+001128 EC?? F???      00180         CALL NOTA_SOL;
+00112C A481           00181     BTFSS PORTB, 2;
+00112E EC?? F???      00182         CALL NOTA_SI;
+001132 A681           00183     BTFSS PORTB, 3;
+001134 EC?? F???      00184         CALL NOTA_FA_MAYOR;
+                      00185 
+001138 BA9E           00186     BTFSC PIR1, RCIF;
+00113A EC?? F???      00187         CALL SERIAL;
+Warning[203]: Found opcode in column 1. (GOTO)
+00113E EF?? F???      00188 GOTO LOOP
+                      00189 
+001142                00190 SERIAL:
+Warning[207]: Found label after column 1. (TCL_1)
+001142                00191     TCL_1:
+001142 0E31           00192         MOVLW 0x31;
+001144 62AE           00193         CPFSEQ RCREG1;
+001146 EF?? F???      00194             GOTO TCL_2;
+00114A EC?? F???      00195         CALL ALEGRIA_SONG_1;
+Warning[207]: Found label after column 1. (TCL_2)
+00114E                00196     TCL_2:
+00114E 0E32           00197         MOVLW 0x32;
+001150 62AE           00198         CPFSEQ RCREG1;
+001152 EF?? F???      00199             GOTO TCL_3;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+001156 EC?? F???      00200         CALL ALEGRIA_SONG_2;
+Warning[207]: Found label after column 1. (TCL_3)
+00115A                00201    TCL_3:
+00115A 0E33           00202         MOVLW 0x33;
+00115C 62AE           00203         CPFSEQ RCREG1;
+00115E EF?? F???      00204             GOTO TCL_4;
+001162 EC?? F???      00205         CALL ALEGRIA_SONG_3;
+Warning[207]: Found label after column 1. (TCL_4)
+001166                00206     TCL_4:
+001166 0E34           00207         MOVLW 0x34;
+001168 62AE           00208         CPFSEQ RCREG1;
+00116A EF?? F???      00209             GOTO TCL_5;
+00116E EC?? F???      00210         CALL ALEGRIA_SONG_4;
+Warning[207]: Found label after column 1. (TCL_5)
+001172                00211     TCL_5:
+001172 0E35           00212         MOVLW 0x35;
+001174 62AE           00213         CPFSEQ RCREG1;
+001176 EF?? F???      00214             GOTO TCL_6;
+00117A EC?? F???      00215         CALL ALEGRIA_SONG_5;
+Warning[207]: Found label after column 1. (TCL_6)
+00117E                00216     TCL_6:
+00117E 0E36           00217         MOVLW 0x36;
+001180 62AE           00218         CPFSEQ RCREG1;
+001182 EF?? F???      00219             GOTO TCL_7;
+001186 EC?? F???      00220         CALL ALEGRIA_SONG_6;
+Warning[207]: Found label after column 1. (TCL_7)
+00118A                00221     TCL_7:
+00118A 0E37           00222         MOVLW 0x37;
+00118C 62AE           00223         CPFSEQ RCREG1;
+00118E EF?? F???      00224             GOTO TCL_8;
+001192 EC?? F???      00225         CALL ALEGRIA_SONG_7;
+Warning[207]: Found label after column 1. (TCL_8)
+001196                00226     TCL_8:
+001196 0E38           00227         MOVLW 0x38;
+001198 62AE           00228         CPFSEQ RCREG1;
+00119A EF?? F???      00229             GOTO UNVALID_VALUE;
+00119E EC?? F???      00230         CALL ALEGRIA_SONG_8;
+Warning[207]: Found label after column 1. (UNVALID_VALUE)
+0011A2                00231    UNVALID_VALUE:
+                      00232 
+0011A2 9A9E           00233         BCF PIR1, RCIF;
+Warning[203]: Found opcode in column 1. (RETURN)
+0011A4 0012           00234 RETURN;
+                      00235 
+0011A6                00236 ISR_HIGH:
+0011A6 9EF2           00237     BCF INTCON, GIE;
+0011A8 B4F2           00238     BTFSC INTCON, 2;
+0011AA EC?? F???      00239         CALL TIMER0;
+0011AE 8EF2           00240     BSF INTCON, GIE;
+Warning[203]: Found opcode in column 1. (RETFIE)
+0011B0 0011           00241 RETFIE FAST;
+                      00242 
+0011B2                00243 CONFIG_TIMERS:
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0011B2 0E03           00244     MOVLW 0X03;
+0011B4 6E12           00245     MOVWF COUNTER;
+0011B6 8EF2           00246     BSF INTCON, GIE;
+0011B8 8ED5           00247     BSF T0CON, TMR0ON;
+0011BA 80CD           00248     BSF T1CON, TMR1ON;
+0011BC EC?? F???      00249     CALL TIMER1
+0011C0 EC?? F???      00250     CALL SONIDO;
+0011C4 9ED5           00251     BCF T0CON, TMR0ON;
+0011C6 9EF2           00252     BCF INTCON, GIE;
+0011C8 9289           00253     BCF LATA,1;
+Warning[203]: Found opcode in column 1. (RETURN)
+0011CA 0012           00254 RETURN
+                      00255 
+0011CC                00256 NOTA_DO:
+0011CC 0EE2           00257     MOVLW 0XE2;
+0011CE 6E10           00258     MOVWF var_TMR0H;
+0011D0 0E24           00259     MOVLW 0X24;
+0011D2 6E11           00260     MOVWF var_TMR0L;
+0011D4 EC?? F???      00261     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+0011D8 0012           00262 RETURN
+                      00263 
+0011DA                00264 NOTA_DO_SOSTENIDO:
+0011DA 0EE3           00265     MOVLW 0XE3;
+0011DC 6E10           00266     MOVWF var_TMR0H;
+0011DE 0ED0           00267     MOVLW 0XD0;
+0011E0 6E11           00268     MOVWF var_TMR0L;
+0011E2 EC?? F???      00269     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+0011E6 0012           00270 RETURN
+                      00271 
+                      00272 
+0011E8                00273 NOTA_RE:
+0011E8 0EE5           00274     MOVLW 0XE5;
+0011EA 6E10           00275     MOVWF var_TMR0H;
+0011EC 0E65           00276     MOVLW 0X65;
+0011EE 6E11           00277     MOVWF var_TMR0L;
+0011F0 EC?? F???      00278     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+0011F4 0012           00279 RETURN
+                      00280 
+0011F6                00281 NOTA_RE_SOSTENIDO:
+0011F6 0EE6           00282     MOVLW 0XE6;
+0011F8 6E10           00283     MOVWF var_TMR0H;
+0011FA 0EE4           00284     MOVLW 0XE4;
+0011FC 6E11           00285     MOVWF var_TMR0L;
+0011FE EC?? F???      00286     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001202 0012           00287 RETURN
+                      00288 
+001204                00289 NOTA_MI:
+001204 0EE8           00290     MOVLW 0XE8;
+001206 6E10           00291     MOVWF var_TMR0H;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+001208 0E4D           00292     MOVLW 0X4D;
+00120A 6E11           00293     MOVWF var_TMR0L;
+00120C EC?? F???      00294     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001210 0012           00295 RETURN
+                      00296 
+001212                00297 NOTA_FA:
+001212 0EE9           00298     MOVLW 0XE9;
+001214 6E10           00299     MOVWF var_TMR0H;
+001216 0EA1           00300     MOVLW 0XA1;
+001218 6E11           00301     MOVWF var_TMR0L;
+00121A EC?? F???      00302     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+00121E 0012           00303 RETURN
+                      00304 
+001220                00305 NOTA_FA_SOSTENIDO:
+001220 0EEA           00306     MOVLW 0XEA;
+001222 6E10           00307     MOVWF var_TMR0H;
+001224 0EE2           00308     MOVLW 0XE2;
+001226 6E11           00309     MOVWF var_TMR0L;
+001228 EC?? F???      00310     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+00122C 0012           00311 RETURN
+                      00312 
+00122E                00313 NOTA_SOL:
+00122E 0EEC           00314     MOVLW 0XEC;
+001230 6E10           00315     MOVWF var_TMR0H;
+001232 0E12           00316     MOVLW 0X12;
+001234 6E11           00317     MOVWF var_TMR0L;
+001236 EC?? F???      00318     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+00123A 0012           00319 RETURN
+                      00320 
+00123C                00321 NOTA_SOL_SOSTENIDO:
+00123C 0EED           00322     MOVLW 0XED;
+00123E 6E10           00323     MOVWF var_TMR0H;
+001240 0E30           00324     MOVLW 0X30;
+001242 6E11           00325     MOVWF var_TMR0L;
+001244 EC?? F???      00326     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001248 0012           00327 RETURN
+                      00328 
+00124A                00329 NOTA_LA:
+00124A 0EEE           00330     MOVLW 0XEE;
+00124C 6E10           00331     MOVWF var_TMR0H;
+00124E 0E3F           00332     MOVLW 0X3F;
+001250 6E11           00333     MOVWF var_TMR0L;
+001252 EC?? F???      00334     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001256 0012           00335 RETURN
+                      00336 
+001258                00337 NOTA_LA_SOSTENIDO:
+001258 0EEF           00338     MOVLW 0XEF;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00125A 6E10           00339     MOVWF var_TMR0H;
+00125C 0E3E           00340     MOVLW 0X3E;
+00125E 6E11           00341     MOVWF var_TMR0L;
+001260 EC?? F???      00342     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001264 0012           00343 RETURN
+                      00344 
+001266                00345 NOTA_SI:
+001266 0EF0           00346     MOVLW 0XF0;
+001268 6E10           00347     MOVWF var_TMR0H;
+00126A 0E2E           00348     MOVLW 0X2E;
+00126C 6E11           00349     MOVWF var_TMR0L;
+00126E EC?? F???      00350     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001272 0012           00351 RETURN
+                      00352 
+001274                00353 NOTA_DO_MAYOR:
+001274 0EF1           00354     MOVLW 0XF1;
+001276 6E10           00355     MOVWF var_TMR0H;
+001278 0E11           00356     MOVLW 0X11;
+00127A 6E11           00357     MOVWF var_TMR0L;
+00127C EC?? F???      00358     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+001280 0012           00359 RETURN
+                      00360 
+001282                00361 NOTA_RE_MAYOR:
+001282 0EF2           00362     MOVLW 0XF2;
+001284 6E10           00363     MOVWF var_TMR0H;
+001286 0EB3           00364     MOVLW 0XB3;
+001288 6E11           00365     MOVWF var_TMR0L;
+00128A EC?? F???      00366     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+00128E 0012           00367 RETURN
+                      00368 
+001290                00369 NOTA_MI_MAYOR:
+001290 0EF4           00370     MOVLW 0XF4;
+001292 6E10           00371     MOVWF var_TMR0H;
+001294 0E26           00372     MOVLW 0X26;
+001296 6E11           00373     MOVWF var_TMR0L;
+001298 EC?? F???      00374     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+00129C 0012           00375 RETURN
+                      00376 
+00129E                00377 NOTA_FA_MAYOR:
+00129E 0EF4           00378     MOVLW 0XF4;
+0012A0 6E10           00379     MOVWF var_TMR0H;
+Warning[202]: Argument out of range.  Least significant bits used.
+0012A2 0ED1           00380     MOVLW 0XF4D1;
+0012A4 6E11           00381     MOVWF var_TMR0L;
+0012A6 EC?? F???      00382     CALL CONFIG_TIMERS;
+Warning[203]: Found opcode in column 1. (RETURN)
+0012AA 0012           00383 RETURN
+                      00384 
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0012AC                00385 SONIDO:
+                      00386     ;;CONFIGURACIÓN DEL PWM
+0012AC B2C2           00387     BTFSC ADCON0, 1
+0012AE EF?? F???      00388         GOTO SONIDO;
+0012B2 9EC0           00389     BCF ADCON2, ADFM ;pasar parte alta
+0012B4 CFC4 FFBE      00390     MOVFF ADRESH, CCPR1L ;pasar parte baja
+0012B8 ACC3           00391     BTFSS ADRESL, 6;
+0012BA 98BD           00392         BCF CCP1CON, 4;
+0012BC BCC3           00393     BTFSC ADRESL, 6;
+0012BE 88BD           00394         BSF CCP1CON, 4;
+0012C0 AEC3           00395     BTFSS ADRESL, 7;
+0012C2 9ABD           00396         BCF CCP1CON, 5;
+0012C4 BEC3           00397     BTFSC ADRESL, 7;
+0012C6 8ABD           00398         BSF CCP1CON, 5;
+0012C8 82C2           00399     BSF ADCON0, 1;
+                      00400     ;; END CONFIGURACION DEL PWM
+                      00401     ;;inicio PASAR LA SALIDA DE LA FRECUENCIA DEL PWM a la BOCINA
+0012CA B480           00402     BTFSC PORTA, 2;
+0012CC 8289           00403         BSF LATA,1;
+0012CE A480           00404     BTFSS PORTA, 2;
+0012D0 9289           00405         BCF LATA,1;
+                      00406     ;;fin PASAR LA SALIDA DE LA FRECUENCIA DEL PWM a la BOCINA
+0012D2 B09E           00407     BTFSC PIR1, TMR1IF;
+0012D4 EC?? F???      00408         CALL TIMER1;
+                      00409 
+0012D8 0E00           00410     MOVLW 0X00;
+0012DA 6412           00411     CPFSGT COUNTER
+0012DC 0012           00412        RETURN
+Warning[203]: Found opcode in column 1. (GOTO)
+0012DE EF?? F???      00413 GOTO SONIDO;
+                      00414 
+0012E2                00415 TIMER0:
+0012E2 9289           00416     BCF LATA,1; se apaga la salida
+0012E4 C010 FFD7      00417     MOVFF var_TMR0H, TMR0H;
+0012E8 C011 FFD6      00418     MOVFF var_TMR0L, TMR0L;
+0012EC 94F2           00419     BCF INTCON,2 ;LIMPIAR BANDERA
+                      00420     ;; PARTE BAJA DE LA ONDA PERIODICA
+Warning[207]: Found label after column 1. (PWM_OFF)
+0012EE A4F2           00421     PWM_OFF: BTFSS INTCON,2
+0012F0 EF?? F???      00422         GOTO PWM_OFF;
+0012F4 C010 FFD7      00423     MOVFF var_TMR0H, TMR0H;
+0012F8 C011 FFD6      00424     MOVFF var_TMR0L, TMR0L;
+0012FC 94F2           00425     BCF INTCON,2 ;LIMPIAR BANDERA
+Warning[203]: Found opcode in column 1. (RETURN)
+0012FE 0012           00426 RETURN
+                      00427 
+001300                00428 TIMER1:
+001300 0612           00429     DECF COUNTER, 1;
+001302 0E15           00430     MOVLW 0X15
+001304 6ECF           00431     MOVWF TMR1H
+001306 0EA0           00432     MOVLW 0XA0
+001308 6ECE           00433     MOVWF TMR1L
+00130A 909E           00434     BCF PIR1, TMR1IF;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Warning[203]: Found opcode in column 1. (RETURN)
+00130C 0012           00435 RETURN
+                      00436 
+00130E                00437 WRITE_TEXT:
+00130E 4E14           00438     DCFSNZ LCD_NO_VISIBLE;
+001310 EC?? F???      00439         CALL LCD_2RENGLON;
+001314 8484           00440     bsf PORTE,LCD_EN ; EN = 1
+001316 8084           00441     bsf PORTE,LCD_RS ; RS = 1
+001318 6E83           00442     movwf PORTD;
+00131A 9484           00443     bcf PORTE,LCD_EN ; EN = 0
+00131C EC?? F???      00444     call DELAY;
+Warning[203]: Found opcode in column 1. (RETURN)
+001320 0012           00445 RETURN;
+                      00446 
+001322                00447 LCD_2RENGLON:
+001322 6E13           00448     MOVWF CHAR;
+001324 8484           00449     bsf PORTE,LCD_EN ; EN = 1
+001326 9084           00450     bcf PORTE,LCD_RS ; RS = 0
+001328 0EC0           00451     MOVLW 0XC0;
+00132A 6E83           00452     movwf PORTD;
+00132C 9484           00453     bcf PORTE,LCD_EN ; EN = 0
+00132E EC?? F???      00454     call DELAY;
+001332 5013           00455     MOVF CHAR,0;
+Warning[203]: Found opcode in column 1. (RETURN)
+001334 0012           00456 RETURN;
+                      00457 
+001336                00458 delay2:
+001336 0EFF           00459   MOVLW 0XFF
+001338 6E00           00460   MOVWF variable1
+00133A 6E07           00461   MOVWF variable2
+Warning[207]: Found label after column 1. (loop1)
+00133C                00462    loop1:
+00133C 2E07           00463     decfsz variable2
+00133E EF?? F???      00464         goto loop1
+001342 2E00           00465     decfsz variable1
+001344 EF?? F???      00466         goto loop1
+Warning[203]: Found opcode in column 1. (return)
+001348 0012           00467 return
+                      00468 
+00134A                00469 DELAY:
+00134A EC?? F???      00470     CALL delay2;
+                      00471 ;    CALL delay2;
+                      00472 ;    CALL delay2;
+Warning[203]: Found opcode in column 1. (return)
+00134E 0012           00473 return
+                      00474 
+001350                00475 delay500:
+001350 EC?? F???      00476     CALL delay2;
+001354 EC?? F???      00477     CALL delay2;
+Warning[203]: Found opcode in column 1. (return)
+001358 0012           00478 return
+                      00479 
+00135A                00480 PRINT_GUION:
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00135A 0E2D           00481     MOVLW 0X2D
+00135C EC?? F???      00482     CALL WRITE_TEXT
+001360 EC?? F???      00483     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+001364 0012           00484 RETURN
+                      00485 
+001366                00486 PRINT_DO:
+001366 0E44           00487     MOVLW 0X44
+001368 EC?? F???      00488     CALL WRITE_TEXT
+00136C EC?? F???      00489     CALL DELAY
+001370 0E6F           00490     MOVLW 0X6F
+001372 EC?? F???      00491     CALL WRITE_TEXT
+001376 EC?? F???      00492     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+00137A 0012           00493 RETURN
+                      00494 
+00137C                00495 PRINT_DO_SOSTENIDO:
+00137C 0E44           00496     MOVLW 0X44
+00137E EC?? F???      00497     CALL WRITE_TEXT
+001382 EC?? F???      00498     CALL DELAY
+001386 0E6F           00499     MOVLW 0X6F
+001388 EC?? F???      00500     CALL WRITE_TEXT
+00138C EC?? F???      00501     CALL DELAY
+001390 0E23           00502     MOVLW 0X23
+001392 EC?? F???      00503     CALL WRITE_TEXT
+001396 EC?? F???      00504     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+00139A 0012           00505 RETURN
+                      00506 
+00139C                00507 PRINT_RE:
+00139C 0E52           00508     MOVLW 0X52
+00139E EC?? F???      00509     CALL WRITE_TEXT
+0013A2 EC?? F???      00510     CALL DELAY
+0013A6 0E65           00511     MOVLW 0X65
+0013A8 EC?? F???      00512     CALL WRITE_TEXT
+0013AC EC?? F???      00513     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+0013B0 0012           00514 RETURN
+                      00515 
+0013B2                00516 PRINT_RE_SOSTENIDO:
+0013B2 0E52           00517     MOVLW 0X52
+0013B4 EC?? F???      00518     CALL WRITE_TEXT
+0013B8 EC?? F???      00519     CALL DELAY
+0013BC 0E65           00520     MOVLW 0X65
+0013BE EC?? F???      00521     CALL WRITE_TEXT
+0013C2 EC?? F???      00522     CALL DELAY
+0013C6 0E23           00523     MOVLW 0X23
+0013C8 EC?? F???      00524     CALL WRITE_TEXT
+0013CC EC?? F???      00525     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+0013D0 0012           00526 RETURN
+                      00527 
+0013D2                00528 PRINT_MI:
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0013D2 0E4D           00529     MOVLW 0X4D
+0013D4 EC?? F???      00530     CALL WRITE_TEXT
+0013D8 EC?? F???      00531     CALL DELAY
+0013DC 0E69           00532     MOVLW 0X69
+0013DE EC?? F???      00533     CALL WRITE_TEXT
+0013E2 EC?? F???      00534     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+0013E6 0012           00535 RETURN
+                      00536 
+0013E8                00537 PRINT_FA:
+0013E8 0E46           00538     MOVLW 0X46
+0013EA EC?? F???      00539     CALL WRITE_TEXT
+0013EE EC?? F???      00540     CALL DELAY
+0013F2 0E61           00541     MOVLW 0X61
+0013F4 EC?? F???      00542     CALL WRITE_TEXT
+0013F8 EC?? F???      00543     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+0013FC 0012           00544 RETURN
+                      00545 
+0013FE                00546 PRINT_FA_SOSTENIDO:
+0013FE 0E46           00547     MOVLW 0X46
+001400 EC?? F???      00548     CALL WRITE_TEXT
+001404 EC?? F???      00549     CALL DELAY
+001408 0E61           00550     MOVLW 0X61
+00140A EC?? F???      00551     CALL WRITE_TEXT
+00140E EC?? F???      00552     CALL DELAY
+001412 0E23           00553     MOVLW 0X23
+001414 EC?? F???      00554     CALL WRITE_TEXT
+001418 EC?? F???      00555     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+00141C 0012           00556 RETURN
+                      00557 
+00141E                00558 PRINT_SOL:
+00141E 0E53           00559     MOVLW 0X53
+001420 EC?? F???      00560     CALL WRITE_TEXT
+001424 EC?? F???      00561     CALL DELAY
+001428 0E6F           00562     MOVLW 0X6F
+00142A EC?? F???      00563     CALL WRITE_TEXT
+00142E EC?? F???      00564     CALL DELAY
+001432 0E6C           00565     MOVLW 0X6C
+001434 EC?? F???      00566     CALL WRITE_TEXT
+001438 EC?? F???      00567     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+00143C 0012           00568 RETURN
+                      00569 
+00143E                00570 PRINT_SOL_SOSTENIDO:
+00143E 0E53           00571     MOVLW 0X53
+001440 EC?? F???      00572     CALL WRITE_TEXT
+001444 EC?? F???      00573     CALL DELAY
+001448 0E6F           00574     MOVLW 0X6F
+00144A EC?? F???      00575     CALL WRITE_TEXT
+00144E EC?? F???      00576     CALL DELAY
+001452 0E6C           00577     MOVLW 0X6C
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+001454 EC?? F???      00578     CALL WRITE_TEXT
+001458 EC?? F???      00579     CALL DELAY
+00145C 0E23           00580     MOVLW 0X23
+00145E EC?? F???      00581     CALL WRITE_TEXT
+001462 EC?? F???      00582     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+001466 0012           00583 RETURN
+                      00584 
+001468                00585 PRINT_LA:
+001468 0E4C           00586     MOVLW 0X4C
+00146A EC?? F???      00587     CALL WRITE_TEXT
+00146E EC?? F???      00588     CALL DELAY
+001472 0E61           00589     MOVLW 0X61
+001474 EC?? F???      00590     CALL WRITE_TEXT
+001478 EC?? F???      00591     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+00147C 0012           00592 RETURN
+                      00593 
+00147E                00594 PRINT_LA_SOSTENIDO:
+00147E 0E4C           00595     MOVLW 0X4C
+001480 EC?? F???      00596     CALL WRITE_TEXT
+001484 EC?? F???      00597     CALL DELAY
+001488 0E61           00598     MOVLW 0X61
+00148A EC?? F???      00599     CALL WRITE_TEXT
+00148E EC?? F???      00600     CALL DELAY
+001492 0E23           00601     MOVLW 0X23
+001494 EC?? F???      00602     CALL WRITE_TEXT
+001498 EC?? F???      00603     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+00149C 0012           00604 RETURN
+                      00605 
+00149E                00606 PRINT_SI:
+00149E 0E53           00607     MOVLW 0X53
+0014A0 EC?? F???      00608     CALL WRITE_TEXT
+0014A4 EC?? F???      00609     CALL DELAY
+0014A8 0E69           00610     MOVLW 0X69
+0014AA EC?? F???      00611     CALL WRITE_TEXT
+0014AE EC?? F???      00612     CALL DELAY
+Warning[203]: Found opcode in column 1. (RETURN)
+0014B2 0012           00613 RETURN
+                      00614 
+0014B4                00615 ALEGRIA_SONG_1:
+0014B4 EC?? F???      00616     CALL PRINT_MI;
+0014B8 EC?? F???      00617     CALL PRINT_GUION;
+0014BC EC?? F???      00618     CALL PRINT_FA;
+0014C0 EC?? F???      00619     CALL PRINT_GUION;
+0014C4 EC?? F???      00620     CALL PRINT_SOL;
+0014C8 EC?? F???      00621     CALL PRINT_GUION;
+0014CC EC?? F???      00622     CALL PRINT_SOL;
+0014D0 EC?? F???      00623     CALL PRINT_GUION;
+0014D4 EC?? F???      00624     CALL PRINT_FA;
+0014D8 EC?? F???      00625     CALL PRINT_GUION;
+0014DC EC?? F???      00626     CALL PRINT_MI;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0014E0 EC?? F???      00627     CALL PRINT_GUION;
+0014E4 EC?? F???      00628     CALL PRINT_RE;
+0014E8 EC?? F???      00629     CALL PRINT_GUION;
+0014EC EC?? F???      00630     CALL PRINT_DO;
+0014F0 EC?? F???      00631     CALL PRINT_GUION;
+0014F4 EC?? F???      00632     CALL PRINT_DO;
+0014F8 EC?? F???      00633     CALL PRINT_GUION;
+0014FC EC?? F???      00634     CALL PRINT_RE;   
+Warning[203]: Found opcode in column 1. (RETURN)
+001500 0012           00635 RETURN
+                      00636 
+001502                00637 ALEGRIA_SONG_2:
+001502 EC?? F???      00638     CALL PRINT_MI;
+001506 EC?? F???      00639     CALL PRINT_GUION;
+00150A EC?? F???      00640     CALL PRINT_MI;
+00150E EC?? F???      00641     CALL PRINT_GUION;
+001512 EC?? F???      00642     CALL PRINT_RE;
+Warning[203]: Found opcode in column 1. (RETURN)
+001516 0012           00643 RETURN
+                      00644 
+001518                00645 ALEGRIA_SONG_3:
+001518 EC?? F???      00646     CALL PRINT_MI;
+00151C EC?? F???      00647     CALL PRINT_GUION;
+001520 EC?? F???      00648     CALL PRINT_FA;
+001524 EC?? F???      00649     CALL PRINT_GUION;
+001528 EC?? F???      00650     CALL PRINT_SOL;
+00152C EC?? F???      00651     CALL PRINT_GUION;
+001530 EC?? F???      00652     CALL PRINT_SOL;
+001534 EC?? F???      00653     CALL PRINT_GUION;
+001538 EC?? F???      00654     CALL PRINT_FA;
+00153C EC?? F???      00655     CALL PRINT_GUION;
+001540 EC?? F???      00656     CALL PRINT_MI;
+001544 EC?? F???      00657     CALL PRINT_GUION;
+001548 EC?? F???      00658     CALL PRINT_RE;
+00154C EC?? F???      00659     CALL PRINT_GUION;
+001550 EC?? F???      00660     CALL PRINT_DO;
+001554 EC?? F???      00661     CALL PRINT_GUION;
+001558 EC?? F???      00662     CALL PRINT_DO;
+00155C EC?? F???      00663     CALL PRINT_GUION;
+001560 EC?? F???      00664     CALL PRINT_RE;
+Warning[203]: Found opcode in column 1. (RETURN)
+001564 0012           00665 RETURN
+                      00666 
+001566                00667 ALEGRIA_SONG_4:
+001566 EC?? F???      00668     CALL PRINT_MI;
+00156A EC?? F???      00669     CALL PRINT_GUION;
+00156E EC?? F???      00670     CALL PRINT_RE;
+001572 EC?? F???      00671     CALL PRINT_GUION;
+001576 EC?? F???      00672     CALL PRINT_DO;
+Warning[203]: Found opcode in column 1. (RETURN)
+00157A 0012           00673 RETURN
+                      00674 
+00157C                00675 ALEGRIA_SONG_5:
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00157C EC?? F???      00676     CALL PRINT_RE;
+001580 EC?? F???      00677     CALL PRINT_GUION;
+001584 EC?? F???      00678     CALL PRINT_MI;
+001588 EC?? F???      00679     CALL PRINT_GUION;
+00158C EC?? F???      00680     CALL PRINT_DO;
+001590 EC?? F???      00681     CALL PRINT_GUION;
+001594 EC?? F???      00682     CALL PRINT_RE;
+001598 EC?? F???      00683     CALL PRINT_GUION;
+00159C EC?? F???      00684     CALL PRINT_MI;
+0015A0 EC?? F???      00685     CALL PRINT_GUION;
+0015A4 EC?? F???      00686     CALL PRINT_FA;
+0015A8 EC?? F???      00687     CALL PRINT_GUION;
+0015AC EC?? F???      00688     CALL PRINT_MI;
+0015B0 EC?? F???      00689     CALL PRINT_GUION;
+0015B4 EC?? F???      00690     CALL PRINT_DO;
+0015B8 EC?? F???      00691     CALL PRINT_GUION;
+0015BC EC?? F???      00692     CALL PRINT_RE;
+0015C0 EC?? F???      00693     CALL PRINT_GUION;
+0015C4 EC?? F???      00694     CALL PRINT_MI;
+0015C8 EC?? F???      00695     CALL PRINT_GUION;
+0015CC EC?? F???      00696     CALL PRINT_FA;
+Warning[203]: Found opcode in column 1. (RETURN)
+0015D0 0012           00697 RETURN
+                      00698 
+0015D2                00699 ALEGRIA_SONG_6:
+0015D2 EC?? F???      00700     CALL PRINT_MI;
+0015D6 EC?? F???      00701     CALL PRINT_GUION;
+0015DA EC?? F???      00702     CALL PRINT_RE;
+0015DE EC?? F???      00703     CALL PRINT_GUION;
+0015E2 EC?? F???      00704     CALL PRINT_DO;
+0015E6 EC?? F???      00705     CALL PRINT_GUION;
+0015EA EC?? F???      00706     CALL PRINT_RE;
+0015EE EC?? F???      00707     CALL PRINT_GUION;
+0015F2 EC?? F???      00708     CALL PRINT_SOL;
+Warning[203]: Found opcode in column 1. (RETURN)
+0015F6 0012           00709 RETURN
+                      00710 
+0015F8                00711 ALEGRIA_SONG_7:
+0015F8 EC?? F???      00712     CALL PRINT_MI;
+0015FC EC?? F???      00713     CALL PRINT_GUION;
+001600 EC?? F???      00714     CALL PRINT_FA;
+001604 EC?? F???      00715     CALL PRINT_GUION;
+001608 EC?? F???      00716     CALL PRINT_SOL;
+00160C EC?? F???      00717     CALL PRINT_GUION;
+001610 EC?? F???      00718     CALL PRINT_SOL;
+001614 EC?? F???      00719     CALL PRINT_GUION;
+001618 EC?? F???      00720     CALL PRINT_FA;
+                      00721     ;CALL PRINT_GUION;
+00161C EC?? F???      00722     CALL PRINT_MI;
+001620 EC?? F???      00723     CALL PRINT_GUION;
+001624 EC?? F???      00724     CALL PRINT_RE;
+001628 EC?? F???      00725     CALL PRINT_GUION;
+00162C EC?? F???      00726     CALL PRINT_DO;
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+001630 EC?? F???      00727     CALL PRINT_GUION;
+001634 EC?? F???      00728     CALL PRINT_DO;
+001638 EC?? F???      00729     CALL PRINT_GUION;
+00163C EC?? F???      00730     CALL PRINT_RE;
+Warning[203]: Found opcode in column 1. (RETURN)
+001640 0012           00731 RETURN
+                      00732 
+001642                00733 ALEGRIA_SONG_8:
+001642 EC?? F???      00734     CALL PRINT_MI;
+001646 EC?? F???      00735     CALL PRINT_GUION;
+00164A EC?? F???      00736     CALL PRINT_RE;
+00164E EC?? F???      00737     CALL PRINT_GUION;
+001652 EC?? F???      00738     CALL PRINT_DO;
+Warning[203]: Found opcode in column 1. (RETURN)
+001656 0012           00739 RETURN
+                      00740 
+001658                00741 EPONA_SONG:
+                      00742 ;MOVLW 0X4C
+                      00743 ;CALL WRITE_TEXT
+                      00744 ;CALL DELAY
+                      00745 ;MOVLW 0X41
+                      00746 ;CALL WRITE_TEXT
+                      00747 ;CALL DELAY
+                      00748 ;MOVLW 0X2D
+                      00749 ;CALL WRITE_TEXT
+                      00750 ;
+                      00751 ;MOVLW 0X46
+                      00752 ;CALL WRITE_TEXT
+                      00753 ;CALL DELAY
+                      00754 ;MOVLW 0X41
+                      00755 ;CALL WRITE_TEXT
+                      00756 ;CALL DELAY
+                      00757 ;MOVLW 0X2D
+                      00758 ;CALL WRITE_TEXT
+                      00759 ;
+                      00760 ;MOVLW 0X4D
+                      00761 ;CALL WRITE_TEXT
+                      00762 ;CALL DELAY
+                      00763 ;MOVLW 0X49
+                      00764 ;CALL WRITE_TEXT
+                      00765 ;CALL DELAY
+                      00766 ;MOVLW 0X2D
+                      00767 ;CALL WRITE_TEXT
+Warning[203]: Found opcode in column 1. (RETURN)
+001658 0012           00768 RETURN
+                      00769 
+Warning[205]: Found directive in column 1. (END)
+                      00770 END
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+A                                 00000000
+ABDEN                             00000000
+ABDOVF                            00000007
+ACCESS                            00000000
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ACKTIM                            00000007
+ACQT0                             00000003
+ACQT1                             00000004
+ACQT2                             00000005
+ACTCON                            00000FB5
+ACTD                              00000006
+ACTEN                             00000007
+ACTIE                             00000007
+ACTIF                             00000007
+ACTIP                             00000007
+ACTLOCK                           00000003
+ACTMD                             00000004
+ACTOR                             00000001
+ACTORS                            00000001
+ACTSEL                            00000007
+ACTSRC                            00000004
+ACTUD                             00000006
+ACTVIE                            00000002
+ACTVIF                            00000002
+ADCMD                             00000002
+ADCON0                            00000FC2
+ADCON1                            00000FC1
+ADCON2                            00000FC0
+ADCS0                             00000000
+ADCS1                             00000001
+ADCS2                             00000002
+ADDEN                             00000003
+ADDR0                             00000000
+ADDR1                             00000001
+ADDR2                             00000002
+ADDR3                             00000003
+ADDR4                             00000004
+ADDR5                             00000005
+ADDR6                             00000006
+ADEN                              00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADIP                              00000006
+ADON                              00000000
+ADRESH                            00000FC4
+ADRESL                            00000FC3
+AHEN                              00000001
+ALEGRIA_SONG_1                    000014B4
+ALEGRIA_SONG_2                    00001502
+ALEGRIA_SONG_3                    00001518
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ALEGRIA_SONG_4                    00001566
+ALEGRIA_SONG_5                    0000157C
+ALEGRIA_SONG_6                    000015D2
+ALEGRIA_SONG_7                    000015F8
+ALEGRIA_SONG_8                    00001642
+AN0                               00000000
+AN1                               00000001
+AN2                               00000002
+AN3                               00000003
+AN4                               00000005
+ANSA0                             00000000
+ANSA1                             00000001
+ANSA2                             00000002
+ANSA3                             00000003
+ANSA5                             00000005
+ANSB0                             00000000
+ANSB1                             00000001
+ANSB2                             00000002
+ANSB3                             00000003
+ANSB4                             00000004
+ANSB5                             00000005
+ANSC2                             00000002
+ANSC6                             00000006
+ANSC7                             00000007
+ANSD0                             00000000
+ANSD1                             00000001
+ANSD2                             00000002
+ANSD3                             00000003
+ANSD4                             00000004
+ANSD5                             00000005
+ANSD6                             00000006
+ANSD7                             00000007
+ANSE0                             00000000
+ANSE1                             00000001
+ANSE2                             00000002
+ANSELA                            00000F5B
+ANSELB                            00000F5C
+ANSELC                            00000F5D
+ANSELD                            00000F5E
+ANSELE                            00000F5F
+BANKED                            00000001
+BAUDCON                           00000FB8
+BAUDCON1                          00000FB8
+BCL1IE                            00000003
+BCL1IF                            00000003
+BCL1IP                            00000003
+BCLIE                             00000003
+BCLIF                             00000003
+BCLIP                             00000003
+BF                                00000000
+BGVST                             00000006
+BOEN                              00000004
+BOR                               00000000
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 19
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+BRG5                              00000005
+BRG6                              00000006
+BRG7                              00000007
+BRG8                              00000000
+BRG9                              00000001
+BRGH                              00000002
+BSR                               00000FE0
+BTOEE                             00000004
+BTOEF                             00000004
+BTSEE                             00000007
+BTSEF                             00000007
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1HYS                             00000003
+C1IE                              00000006
+C1IF                              00000006
+C1IP                              00000006
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SP                              00000003
+C1SYNC                            00000001
+C1TSEL                            00000000
+C2CH0                             00000000
+C2CH1                             00000001
+C2HYS                             00000002
+C2IE                              00000005
+C2IF                              00000005
+C2IP                              00000005
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2RSEL                            00000004
+C2SP                              00000003
+C2SYNC                            00000000
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 20
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+C2TSEL                            00000003
+CCH0                              00000000
+CCH1                              00000001
+CCP1                              00000002
+CCP1ASE                           00000007
+CCP1CON                           00000FBD
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1IP                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1MD                            00000000
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           00000F97
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2IP                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2MD                            00000001
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000FBE
+CCPR1H                            00000FBF
+CCPR1L                            00000FBE
+CCPR2                             00000F90
+CCPR2H                            00000F91
+CCPR2L                            00000F90
+CCPTMRS                           00000F59
+CFGS                              00000006
+CHAR                              00000013
+CK                                00000006
+CK1SPP                            00000000
+CK2SPP                            00000001
+CKE                               00000006
+CKP                               00000004
+CKTXP                             00000004
+CM1CON0                           00000F98
+CM1IE                             00000006
+CM1IF                             00000006
+CM1IP                             00000006
+CM2CON0                           00000F99
+CM2CON1                           00000F9A
+CM2IE                             00000005
+CM2IF                             00000005
+CM2IP                             00000005
+CMP1MD                            00000003
+CMP2MD                            00000004
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 21
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+COE                               00000005
+CON                               00000007
+CONFIG_TIMERS                     000011B2
+COUNTER                           00000012
+COUT1                             00000006
+COUT2                             00000006
+CPOL                              00000004
+CRC16EE                           00000002
+CRC16EF                           00000002
+CRC5EE                            00000001
+CRC5EF                            00000001
+CREF                              00000002
+CREN                              00000004
+CSRC                              00000007
+CTMUCON0                          00000F8F
+CTMUCON1                          00000F8E
+CTMUCONH                          00000F8F
+CTMUCONL                          00000F8E
+CTMUEN                            00000007
+CTMUICON                          00000F88
+CTMUIE                            00000003
+CTMUIF                            00000003
+CTMUIP                            00000003
+CTMUMD                            00000005
+CTMUSIDL                          00000005
+CTTRIG                            00000000
+DACEN                             00000007
+DACLPS                            00000006
+DACNSS                            00000000
+DACOE                             00000005
+DACPSS0                           00000002
+DACPSS1                           00000003
+DACR0                             00000000
+DACR1                             00000001
+DACR2                             00000002
+DACR3                             00000003
+DACR4                             00000004
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DDRA                              TRISA
+DDRB                              TRISB
+DDRC                              TRISC
+DDRD                              TRISD
+DDRE                              TRISE
+DELAY                             0000134A
+DFN8EE                            00000003
+DFN8EF                            00000003
+DHEN                              00000000
+DIR                               00000002
+DONE                              00000001
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 22
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+DTRXP                             00000005
+D_NOT_A                           00000005
+ECCP1AS                           00000FB6
+ECCP1AS0                          00000004
+ECCP1AS1                          00000005
+ECCP1AS2                          00000006
+ECCP1ASE                          00000007
+ECCP1CON                          00000FBD
+ECCP1DEL                          00000FB7
+ECCP2CON                          00000F97
+EDG1POL                           00000004
+EDG1SEL0                          00000002
+EDG1SEL1                          00000003
+EDG1STAT                          00000000
+EDG2POL                           00000007
+EDG2SEL0                          00000005
+EDG2SEL1                          00000006
+EDG2STAT                          00000001
+EDGEN                             00000003
+EDGSEQEN                          00000002
+EEADR                             00000FA9
+EECON1                            00000FA6
+EECON2                            00000FA7
+EEDATA                            00000FA8
+EEIE                              00000004
+EEIF                              00000004
+EEIP                              00000004
+EEPGD                             00000007
+ENDP0                             00000003
+ENDP1                             00000004
+ENDP2                             00000005
+ENDP3                             00000006
+EPCONDIS                          00000003
+EPHSHK                            00000004
+EPINEN                            00000001
+EPONA_SONG                        00001658
+EPOUTEN                           00000002
+EPSTALL                           00000000
+FAST                              00000001
+FERR                              00000002
+FLTS                              00000002
+FREE                              00000004
+FRM0                              00000000
+FRM1                              00000001
+FRM10                             00000002
+FRM2                              00000002
+FRM3                              00000003
+FRM4                              00000004
+FRM5                              00000005
+FRM6                              00000006
+FRM7                              00000007
+FRM8                              00000000
+FRM9                              00000001
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+FSEN                              00000002
+FSR0                              00000000
+FSR0H                             00000FEA
+FSR0L                             00000FE9
+FSR1                              00000001
+FSR1H                             00000FE2
+FSR1L                             00000FE1
+FSR2                              00000002
+FSR2H                             00000FDA
+FSR2L                             00000FD9
+FVREN                             00000007
+FVRS0                             00000004
+FVRS1                             00000005
+FVRST                             00000006
+GCEN                              00000007
+GIE                               00000007
+GIEH                              00000007
+GIEL                              00000006
+GIE_GIEH                          00000007
+GO                                00000001
+GO_NOT_DONE                       00000001
+HFIOFR                            00000001
+HFIOFS                            00000002
+HLVDCON                           00000F9C
+HLVDEN                            00000004
+HLVDIE                            00000002
+HLVDIF                            00000002
+HLVDIN                            00000005
+HLVDIP                            00000002
+HLVDL0                            00000000
+HLVDL1                            00000001
+HLVDL2                            00000002
+HLVDL3                            00000003
+IDISSEN                           00000001
+IDLEIE                            00000004
+IDLEIF                            00000004
+IDLEN                             00000007
+INDF0                             00000FEF
+INDF1                             00000FE7
+INDF2                             00000FDF
+INT0                              00000000
+INT0E                             00000004
+INT0F                             00000001
+INT0IE                            00000004
+INT0IF                            00000001
+INT1                              00000001
+INT1E                             00000003
+INT1F                             00000000
+INT1IE                            00000003
+INT1IF                            00000000
+INT1IP                            00000006
+INT1P                             00000006
+INT2                              00000002
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 24
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+INT2E                             00000004
+INT2F                             00000001
+INT2IE                            00000004
+INT2IF                            00000001
+INT2IP                            00000007
+INT2P                             00000007
+INTCON                            00000FF2
+INTCON2                           00000FF1
+INTCON3                           00000FF0
+INTEDG0                           00000006
+INTEDG1                           00000005
+INTEDG2                           00000004
+INTSRC                            00000005
+IOCB                              00000F86
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IOCC                              00000F87
+IOCC0                             00000000
+IOCC1                             00000001
+IOCC2                             00000002
+IOCC4                             00000004
+IOCC5                             00000005
+IOCC6                             00000006
+IOCC7                             00000007
+IOCIE                             00000003
+IOCIF                             00000000
+IOCIP                             00000000
+IPEN                              00000007
+IPR1                              00000F9F
+IPR2                              00000FA2
+IPR3                              00000FA5
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRNG0                             00000000
+IRNG1                             00000001
+IRVST                             00000005
+ISR_HIGH                          000011A6
+ITRIM0                            00000002
+ITRIM1                            00000003
+ITRIM2                            00000004
+ITRIM3                            00000005
+ITRIM4                            00000006
+ITRIM5                            00000007
+LATA                              00000F89
+LATA0                             00000000
+LATA1                             00000001
+LATA2                             00000002
+LATA3                             00000003
+LATA4                             00000004
+LATA5                             00000005
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 25
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+LATA6                             00000006
+LATA7                             00000007
+LATB                              00000F8A
+LATB0                             00000000
+LATB1                             00000001
+LATB2                             00000002
+LATB3                             00000003
+LATB4                             00000004
+LATB5                             00000005
+LATB6                             00000006
+LATB7                             00000007
+LATC                              00000F8B
+LATC0                             00000000
+LATC1                             00000001
+LATC2                             00000002
+LATC4                             00000004
+LATC5                             00000005
+LATC6                             00000006
+LATC7                             00000007
+LATD                              00000F8C
+LATD0                             00000000
+LATD1                             00000001
+LATD2                             00000002
+LATD3                             00000003
+LATD4                             00000004
+LATD5                             00000005
+LATD6                             00000006
+LATD7                             00000007
+LATE                              00000F8D
+LATE0                             00000000
+LATE1                             00000001
+LATE2                             00000002
+LCD_2RENGLON                      00001322
+LCD_EN                            00000002
+LCD_NO_VISIBLE                    00000014
+LCD_RS                            00000000
+LCD_RW                            00000001
+LFIOFS                            00000000
+LOOP                              000010B6
+LVDIE                             00000002
+LVDIF                             00000002
+LVDIN                             00000005
+LVDIP                             00000002
+MAIN                              0000100C
+MC1OUT                            00000007
+MC2OUT                            00000006
+MSSP1MD                           00000006
+MSSPMD                            00000006
+N                                 00000004
+NOTA_DO                           000011CC
+NOTA_DO_MAYOR                     00001274
+NOTA_DO_SOSTENIDO                 000011DA
+NOTA_FA                           00001212
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 26
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+NOTA_FA_MAYOR                     0000129E
+NOTA_FA_SOSTENIDO                 00001220
+NOTA_LA                           0000124A
+NOTA_LA_SOSTENIDO                 00001258
+NOTA_MI                           00001204
+NOTA_MI_MAYOR                     00001290
+NOTA_RE                           000011E8
+NOTA_RE_MAYOR                     00001282
+NOTA_RE_SOSTENIDO                 000011F6
+NOTA_SI                           00001266
+NOTA_SOL                          0000122E
+NOTA_SOL_SOSTENIDO                0000123C
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000002
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RI                            00000004
+NOT_T1DONE                        00000003
+NOT_T1SYNC                        00000002
+NOT_T3DONE                        00000003
+NOT_T3SYNC                        00000002
+NOT_TO                            00000003
+NVCFG0                            00000000
+NVCFG1                            00000001
+OERR                              00000001
+OESPP                             00000002
+ON                                00000007
+OSC2                              00000006
+OSCCON                            00000FD3
+OSCCON2                           00000FD2
+OSCFIE                            00000007
+OSCFIF                            00000007
+OSCFIP                            00000007
+OSCTUNE                           00000F9B
+OSTS                              00000003
+OV                                00000003
+P                                 00000004
+P1A                               00000002
+P1M0                              00000006
+P1M1                              00000007
+P1RSEN                            00000007
+PC                                00000FF9
+PCIE                              00000006
+PCL                               00000FF9
+PCLATH                            00000FFA
+PCLATU                            00000FFB
+PD                                00000002
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 27
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEIE_GIEL                         00000006
+PEN                               00000002
+PGC                               00000006
+PGD                               00000007
+PGM                               00000005
+PIDEE                             00000000
+PIDEF                             00000000
+PIE1                              00000F9D
+PIE2                              00000FA0
+PIE3                              00000FA3
+PIR1                              00000F9E
+PIR2                              00000FA1
+PIR3                              00000FA4
+PKTDIS                            00000004
+PLLEN                             00000004
+PLLRDY                            00000007
+PLUSW0                            00000FEB
+PLUSW1                            00000FE3
+PLUSW2                            00000FDB
+PMD0                              00000F7E
+PMD1                              00000F7F
+POR                               00000001
+PORTA                             00000F80
+PORTB                             00000F81
+PORTC                             00000F82
+PORTD                             00000F83
+PORTE                             00000F84
+POSTDEC0                          00000FED
+POSTDEC1                          00000FE5
+POSTDEC2                          00000FDD
+POSTINC0                          00000FEE
+POSTINC1                          00000FE6
+POSTINC2                          00000FDE
+PPB0                              00000000
+PPB1                              00000001
+PPBI                              00000001
+PPBRST                            00000006
+PR1SEN                            00000007
+PR2                               00000FBB
+PREINC0                           00000FEC
+PREINC1                           00000FE4
+PREINC2                           00000FDC
+PRINT_DO                          00001366
+PRINT_DO_SOSTENIDO                0000137C
+PRINT_FA                          000013E8
+PRINT_FA_SOSTENIDO                000013FE
+PRINT_GUION                       0000135A
+PRINT_LA                          00001468
+PRINT_LA_SOSTENIDO                0000147E
+PRINT_MI                          000013D2
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 28
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PRINT_RE                          0000139C
+PRINT_RE_SOSTENIDO                000013B2
+PRINT_SI                          0000149E
+PRINT_SOL                         0000141E
+PRINT_SOL_SOSTENIDO               0000143E
+PRISD                             00000002
+PROD                              00000FF3
+PRODH                             00000FF4
+PRODL                             00000FF3
+PSA                               00000003
+PSS1AC0                           00000002
+PSS1AC1                           00000003
+PSS1BD0                           00000000
+PSS1BD1                           00000001
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTR1CON                          00000FB9
+PVCFG0                            00000002
+PVCFG1                            00000003
+PWM1CON                           00000FB7
+PWM_OFF                           000012EE
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBPU                              00000007
+RC0                               00000000
+RC1                               00000001
+RC1IE                             00000005
+RC1IF                             00000005
+RC1IP                             00000005
+RC2                               00000002
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 29
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RCIF                              00000005
+RCIP                              00000005
+RCMT                              00000006
+RCON                              00000FD0
+RCREG                             00000FAE
+RCREG1                            00000FAE
+RCSTA                             00000FAB
+RCSTA1                            00000FAB
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD16                              00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+RESUME                            00000002
+RI                                00000004
+RSEN                              00000001
+RX                                00000007
+RX9                               00000006
+RX9D                              00000000
+RXDTP                             00000005
+R_NOT_W                           00000002
+S                                 00000003
+SBCDE                             00000002
+SBOREN                            00000006
+SCIE                              00000005
+SCKP                              00000004
+SCS0                              00000000
+SCS1                              00000001
+SDAHT                             00000003
+SE0                               00000005
+SEN                               00000000
+SENDB                             00000003
+SERIAL                            00001142
+SIDL                              00000005
+SLRA                              00000000
+SLRB                              00000001
+SLRC                              00000002
+SLRCON                            00000F7A
+SLRD                              00000003
+SLRE                              00000004
+SMP                               00000007
+SOFIE                             00000006
+SOFIF                             00000006
+SONIDO                            000012AC
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 30
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SOSCEN                            00000003
+SOSCGO                            00000003
+SOSCRUN                           00000006
+SP0                               00000000
+SP1                               00000001
+SP2                               00000002
+SP3                               00000003
+SP4                               00000004
+SPBRG                             00000FAF
+SPBRG1                            00000FAF
+SPBRGH                            00000FB0
+SPBRGH1                           00000FB0
+SPEN                              00000007
+SPLLMULT                          00000007
+SPP0                              00000000
+SPP1                              00000001
+SPP2                              00000002
+SPP3                              00000003
+SPP4                              00000004
+SPP5                              00000005
+SPP6                              00000006
+SPP7                              00000007
+SRCLK0                            00000004
+SRCLK1                            00000005
+SRCLK2                            00000006
+SRCON0                            00000F58
+SRCON1                            00000F57
+SREN                              00000005
+SRLEN                             00000007
+SRNQEN                            00000002
+SRPR                              00000000
+SRPS                              00000001
+SRQEN                             00000003
+SRRC1E                            00000000
+SRRC2E                            00000001
+SRRCKE                            00000002
+SRRPE                             00000003
+SRSC1E                            00000004
+SRSC2E                            00000005
+SRSCKE                            00000006
+SRSPE                             00000007
+SSP1ADD                           00000FC8
+SSP1ADD0                          00000000
+SSP1ADD1                          00000001
+SSP1ADD2                          00000002
+SSP1ADD3                          00000003
+SSP1ADD4                          00000004
+SSP1ADD5                          00000005
+SSP1ADD6                          00000006
+SSP1ADD7                          00000007
+SSP1BUF                           00000FC9
+SSP1CON1                          00000FC6
+SSP1CON2                          00000FC5
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 31
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SSP1CON3                          00000FCB
+SSP1IE                            00000003
+SSP1IF                            00000003
+SSP1IP                            00000003
+SSP1MD                            00000006
+SSP1MSK                           00000FCA
+SSP1MSK0                          00000000
+SSP1MSK1                          00000001
+SSP1MSK2                          00000002
+SSP1MSK3                          00000003
+SSP1MSK4                          00000004
+SSP1MSK5                          00000005
+SSP1MSK6                          00000006
+SSP1MSK7                          00000007
+SSP1STAT                          00000FC7
+SSPADD                            00000FC8
+SSPBUF                            00000FC9
+SSPCON                            00000FC6
+SSPCON1                           00000FC6
+SSPCON2                           00000FC5
+SSPCON3                           00000FCB
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPIP                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000FCA
+SSPOV                             00000006
+SSPSTAT                           00000FC7
+STALLIE                           00000005
+STALLIF                           00000005
+STATUS                            00000FD8
+STCON                             00000FB5
+STEN                              00000007
+STIE                              00000007
+STIF                              00000007
+STIP                              00000007
+STKFUL                            00000007
+STKOVF                            00000007
+STKPTR                            00000FFC
+STKUNF                            00000006
+STLOCK                            00000003
+STMD                              00000004
+STOR                              00000001
+STR1A                             00000000
+STR1B                             00000001
+STR1C                             00000002
+STR1D                             00000003
+STR1SYNC                          00000004
+STRA                              00000000
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 32
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+STSRC                             00000004
+STUD                              00000006
+SUSPND                            00000001
+SWDTE                             00000000
+SWDTEN                            00000000
+SYNC                              00000004
+T08BIT                            00000006
+T0CKI                             00000004
+T0CON                             00000FD5
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0IP                              00000002
+T0PS0                             00000000
+T0PS1                             00000001
+T0PS2                             00000002
+T0SE                              00000004
+T13CKI                            00000000
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000FCD
+T1DONE                            00000003
+T1GCON                            00000FCC
+T1GGO                             00000003
+T1GGO_NOT_DONE                    00000003
+T1GGO_NOT_T1DONE                  00000003
+T1GPOL                            00000006
+T1GSPM                            00000004
+T1GSS0                            00000000
+T1GSS1                            00000001
+T1GTM                             00000005
+T1GVAL                            00000002
+T1OSCEN                           00000003
+T1OSI                             00000001
+T1OSO                             00000000
+T1RD16                            00000001
+T1SOSCEN                          00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000FBA
+T2OUTPS0                          00000003
+T2OUTPS1                          00000004
+T2OUTPS2                          00000005
+T2OUTPS3                          00000006
+T3CKPS0                           00000004
+T3CKPS1                           00000005
+T3CON                             00000FB1
+T3DONE                            00000003
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 33
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T3GCON                            00000FB4
+T3GGO                             00000003
+T3GGO_NOT_DONE                    00000003
+T3GGO_NOT_T3DONE                  00000003
+T3GPOL                            00000006
+T3GSPM                            00000004
+T3GSS0                            00000000
+T3GSS1                            00000001
+T3GTM                             00000005
+T3GVAL                            00000002
+T3OSCEN                           00000003
+T3RD16                            00000001
+T3SOSCEN                          00000003
+T3SYNC                            00000002
+TABLAT                            00000FF5
+TBLPTR                            00000FF6
+TBLPTRH                           00000FF7
+TBLPTRL                           00000FF6
+TBLPTRU                           00000FF8
+TCL_1                             00001142
+TCL_2                             0000114E
+TCL_3                             0000115A
+TCL_4                             00001166
+TCL_5                             00001172
+TCL_6                             0000117E
+TCL_7                             0000118A
+TCL_8                             00001196
+TGEN                              00000004
+TIMER0                            000012E2
+TIMER1                            00001300
+TMR0                              00000FD6
+TMR0H                             00000FD7
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR0IP                            00000002
+TMR0L                             00000FD6
+TMR0ON                            00000007
+TMR1                              00000FCE
+TMR1CS0                           00000006
+TMR1CS1                           00000007
+TMR1GE                            00000007
+TMR1GIE                           00000000
+TMR1GIF                           00000000
+TMR1GIP                           00000000
+TMR1H                             00000FCF
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1IP                            00000000
+TMR1L                             00000FCE
+TMR1MD                            00000000
+TMR1ON                            00000000
+TMR2                              00000FBC
+TMR2IE                            00000001
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 34
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TMR2IF                            00000001
+TMR2IP                            00000001
+TMR2MD                            00000001
+TMR2ON                            00000002
+TMR3                              00000FB2
+TMR3CS0                           00000006
+TMR3CS1                           00000007
+TMR3GE                            00000007
+TMR3GIE                           00000001
+TMR3GIF                           00000001
+TMR3GIP                           00000001
+TMR3H                             00000FB3
+TMR3IE                            00000001
+TMR3IF                            00000001
+TMR3IP                            00000001
+TMR3L                             00000FB2
+TMR3MD                            00000002
+TMR3ON                            00000000
+TO                                00000003
+TOS                               00000FFD
+TOSH                              00000FFE
+TOSL                              00000FFD
+TOSU                              00000FFF
+TRIGEN                            00000000
+TRIGSEL                           00000007
+TRISA                             00000F92
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000F93
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000F94
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000F95
+TRISD0                            00000000
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 35
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000F96
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRMT                              00000001
+TRNIE                             00000003
+TRNIF                             00000003
+TSEN                              00000003
+TSRNG                             00000002
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TUN5                              00000005
+TUN6                              00000006
+TX                                00000006
+TX1IE                             00000004
+TX1IF                             00000004
+TX1IP                             00000004
+TX9                               00000006
+TX9D                              00000000
+TXCKP                             00000004
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXIP                              00000004
+TXREG                             00000FAD
+TXREG1                            00000FAD
+TXSTA                             00000FAC
+TXSTA1                            00000FAC
+UA                                00000001
+UADDR                             00000F63
+UART1MD                           00000006
+UARTMD                            00000006
+UCFG                              00000F62
+UCON                              00000F60
+UEIE                              00000F66
+UEIR                              00000F67
+UEP0                              00000F6A
+UEP1                              00000F6B
+UEP10                             00000F74
+UEP11                             00000F75
+UEP12                             00000F76
+UEP13                             00000F77
+UEP14                             00000F78
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 36
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+UEP15                             00000F79
+UEP2                              00000F6C
+UEP3                              00000F6D
+UEP4                              00000F6E
+UEP5                              00000F6F
+UEP6                              00000F70
+UEP7                              00000F71
+UEP8                              00000F72
+UEP9                              00000F73
+UERRIE                            00000001
+UERRIF                            00000001
+UFRM                              00000F68
+UFRMH                             00000F69
+UFRML                             00000F68
+UIE                               00000F64
+UIR                               00000F65
+UNVALID_VALUE                     000011A2
+UOEMON                            00000006
+UPUEN                             00000004
+URSTIE                            00000000
+URSTIF                            00000000
+USBEN                             00000003
+USBIE                             00000002
+USBIF                             00000002
+USBIP                             00000002
+USBMD                             00000005
+USTAT                             00000F61
+UTEYE                             00000007
+UTRDIS                            00000003
+VDIRMAG                           00000007
+VREFCON0                          00000F7D
+VREFCON1                          00000F7C
+VREFCON2                          00000F7B
+VREFM                             00000002
+VREFP                             00000003
+VREGCON                           00000F5A
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000FD1
+WPUB                              00000F85
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WPUE3                             00000007
+WR                                00000001
+WREG                              00000FE8
+WREN                              00000002
+WRERR                             00000003
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 37
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+WRITE_TEXT                        0000130E
+WUE                               00000001
+Z                                 00000002
+_BOREN_NOSLP_2L                   000000FD
+_BOREN_OFF_2L                     000000F9
+_BOREN_ON_2L                      000000FB
+_BOREN_SBORDIS_2L                 000000FF
+_BORV_190_2L                      000000FF
+_BORV_220_2L                      000000F7
+_BORV_250_2L                      000000EF
+_BORV_285_2L                      000000E7
+_CCP2MX_RB3_3H                    000000FE
+_CCP2MX_RC1_3H                    000000FF
+_CFGPLLEN_OFF_1L                  000000FD
+_CFGPLLEN_ON_1L                   000000FF
+_CONFIG1H                         00300001
+_CONFIG1L                         00300000
+_CONFIG2H                         00300003
+_CONFIG2L                         00300002
+_CONFIG3H                         00300005
+_CONFIG4L                         00300006
+_CONFIG5H                         00300009
+_CONFIG5L                         00300008
+_CONFIG6H                         0030000B
+_CONFIG6L                         0030000A
+_CONFIG7H                         0030000D
+_CONFIG7L                         0030000C
+_CP0_OFF_5L                       000000FF
+_CP0_ON_5L                        000000FE
+_CP1_OFF_5L                       000000FF
+_CP1_ON_5L                        000000FD
+_CP2_OFF_5L                       000000FF
+_CP2_ON_5L                        000000FB
+_CP3_OFF_5L                       000000FF
+_CP3_ON_5L                        000000F7
+_CPB_OFF_5H                       000000FF
+_CPB_ON_5H                        000000BF
+_CPD_OFF_5H                       000000FF
+_CPD_ON_5H                        0000007F
+_CPUDIV_CLKDIV2_1L                000000EF
+_CPUDIV_CLKDIV3_1L                000000F7
+_CPUDIV_CLKDIV6_1L                000000FF
+_CPUDIV_NOCLKDIV_1L               000000E7
+_DEBUG_OFF_4L                     000000FF
+_DEBUG_ON_4L                      0000007F
+_DEVID1                           003FFFFE
+_DEVID2                           003FFFFF
+_EBTR0_OFF_7L                     000000FF
+_EBTR0_ON_7L                      000000FE
+_EBTR1_OFF_7L                     000000FF
+_EBTR1_ON_7L                      000000FD
+_EBTR2_OFF_7L                     000000FF
+_EBTR2_ON_7L                      000000FB
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 38
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_EBTR3_OFF_7L                     000000FF
+_EBTR3_ON_7L                      000000F7
+_EBTRB_OFF_7H                     000000FF
+_EBTRB_ON_7H                      000000BF
+_FCMEN_OFF_1H                     000000BF
+_FCMEN_ON_1H                      000000FF
+_FOSC_ECHCLKO_1H                  000000F4
+_FOSC_ECHIO_1H                    000000F5
+_FOSC_ECLCLKO_1H                  000000FC
+_FOSC_ECLIO_1H                    000000FD
+_FOSC_ECMCLKO_1H                  000000FA
+_FOSC_ECMIO_1H                    000000FB
+_FOSC_HSH_1H                      000000F2
+_FOSC_HSM_1H                      000000F3
+_FOSC_INTOSCCLKO_1H               000000F9
+_FOSC_INTOSCIO_1H                 000000F8
+_FOSC_LP_1H                       000000F0
+_FOSC_RCCLKO_1H                   000000F6
+_FOSC_RCIO_1H                     000000F7
+_FOSC_XT_1H                       000000F1
+_ICPRT_OFF_4L                     000000DF
+_ICPRT_ON_4L                      000000FF
+_IDLOC0                           00200000
+_IDLOC1                           00200001
+_IDLOC2                           00200002
+_IDLOC3                           00200003
+_IDLOC4                           00200004
+_IDLOC5                           00200005
+_IDLOC6                           00200006
+_IDLOC7                           00200007
+_IESO_OFF_1H                      0000007F
+_IESO_ON_1H                       000000FF
+_LS48MHZ_SYS24X4_1L               000000DF
+_LS48MHZ_SYS48X8_1L               000000FF
+_LVP_OFF_4L                       000000FB
+_LVP_ON_4L                        000000FF
+_MCLRE_OFF_3H                     0000007F
+_MCLRE_ON_3H                      000000FF
+_PBADEN_OFF_3H                    000000FD
+_PBADEN_ON_3H                     000000FF
+_PCLKEN_OFF_1H                    000000DF
+_PCLKEN_ON_1H                     000000FF
+_PLLSEL_PLL3X_1L                  000000FF
+_PLLSEL_PLL4X_1L                  000000FE
+_SDOMX_RB3_3H                     000000FF
+_SDOMX_RC7_3H                     000000BF
+_STVREN_OFF_4L                    000000FE
+_STVREN_ON_4L                     000000FF
+_T3CMX_RB5_3H                     000000EF
+_T3CMX_RC0_3H                     000000FF
+_WDTEN_NOSLP_2H                   000000FD
+_WDTEN_OFF_2H                     000000FC
+_WDTEN_ON_2H                      000000FF
+MPASM 5.56                        BOCINA.ASM   11-26-2014  11:38:55         PAGE 39
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_WDTEN_SWON_2H                    000000FE
+_WDTPS_1024_2H                    000000EB
+_WDTPS_128_2H                     000000DF
+_WDTPS_16384_2H                   000000FB
+_WDTPS_16_2H                      000000D3
+_WDTPS_1_2H                       000000C3
+_WDTPS_2048_2H                    000000EF
+_WDTPS_256_2H                     000000E3
+_WDTPS_2_2H                       000000C7
+_WDTPS_32768_2H                   000000FF
+_WDTPS_32_2H                      000000D7
+_WDTPS_4096_2H                    000000F3
+_WDTPS_4_2H                       000000CB
+_WDTPS_512_2H                     000000E7
+_WDTPS_64_2H                      000000DB
+_WDTPS_8192_2H                    000000F7
+_WDTPS_8_2H                       000000CF
+_WRT0_OFF_6L                      000000FF
+_WRT0_ON_6L                       000000FE
+_WRT1_OFF_6L                      000000FF
+_WRT1_ON_6L                       000000FD
+_WRT2_OFF_6L                      000000FF
+_WRT2_ON_6L                       000000FB
+_WRT3_OFF_6L                      000000FF
+_WRT3_ON_6L                       000000F7
+_WRTB_OFF_6H                      000000FF
+_WRTB_ON_6H                       000000BF
+_WRTC_OFF_6H                      000000FF
+_WRTC_ON_6H                       000000DF
+_WRTD_OFF_6H                      000000FF
+_WRTD_ON_6H                       0000007F
+_XINST_OFF_4L                     000000BF
+_XINST_ON_4L                      000000FF
+__18F45K50                        00000001
+_nLPBOR_OFF_2L                    000000FF
+_nLPBOR_ON_2L                     000000BF
+_nPWRTEN_OFF_2L                   000000FF
+_nPWRTEN_ON_2L                    000000FE
+delay2                            00001336
+delay500                          00001350
+loop1                             0000133C
+var_TMR0H                         00000010
+var_TMR0L                         00000011
+variable1                         00000000
+variable2                         00000007
+
+Errors   :     0
+Warnings :    64 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+
